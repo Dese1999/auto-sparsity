@@ -96,7 +96,7 @@ class Identity2d(nn.Module):
         W = self.weight_mask * self.weight
         return input * W
 
-# تعریف BasicBlock
+#  BasicBlock
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -119,7 +119,7 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
 
-# تعریف ResNet
+#  ResNet
 class ResNet(nn.Module):
     def __init__(self, block, num_block, base_width, num_classes=1, dense_classifier=False):
         super().__init__()
@@ -165,7 +165,7 @@ class ResNet(nn.Module):
         output = self.fc(output)
         return output
 
-# تعریف تابع resnet18
+#   resnet18
 def resnet18(input_shape=(3, 32, 32), num_classes=1, dense_classifier=False, pretrained=False):
     model = ResNet(BasicBlock, [2, 2, 2, 2], 64, num_classes, dense_classifier)
     if pretrained:
@@ -176,7 +176,7 @@ def resnet18(input_shape=(3, 32, 32), num_classes=1, dense_classifier=False, pre
         model.load_state_dict(model_dict)
     return model
 
-# تعریف MLP
+#  MLP
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
@@ -207,7 +207,7 @@ class MLP(nn.Module):
         output = self.model(combined)
         return output
 
-# تعریف ResNet18 برای AutoS
+#  ResNet18 for AutoS
 class ResNet18(nn.Module):
     def __init__(self):
         super(ResNet18, self).__init__()
