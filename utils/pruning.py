@@ -130,70 +130,70 @@ class Pruner:
         return data
 
     def autos_prune(self, sparsity, autos_model_path, num_batches=10, silent=False):
-    num_batches = max((len(self.loader) / 32), num_batches)
+        num_batches = max((len(self.loader) / 32), num_batches)
+        
+        # Loads the AutoS (ResNet18) model
+        model = ResNet18().to(self.device)
+        model.load_state_dict(torch.load(autos_model_path))
+        model.eval()
     
-    # Loads the AutoS (ResNet18) model
-    model = ResNet18().to(self.device)
-    model.load_state_dict(torch.load(autos_model_path))
-    model.eval()
-
-    self.indicate()
-    self.model.zero_grad()
-    params = [w.view(-1).to(self.device) for w in self.weights]
-    grads = [torch.zeros_like(w).view(-1) for w in self.weights]
-
-    # Calculates the gradients of the original model from num_batches batches of data.
-    batch_count = 0
-    for x, y in self.loader:
-        x, y = x.to(self.device), y.to(self.device)
+        self.indicate()
         self.model.zero_grad()
-        x = self.model.forward(x)
-        L = torch.nn.CrossEntropyLoss()(x, y)
-        grads_batch = torch.autograd.grad(L, self.weights, allow_unused=True)
-        grads = [
-            g + (ag.view(-1) if ag is not None else torch.zeros_like(g.view(-1)))
-            for g, ag in zip(grads, grads_batch)
-        ]
-        batch_count += 1
-        if batch_count >= num_batches:
-            break
+        params = [w.view(-1).to(self.device) for w in self.weights]
+        grads = [torch.zeros_like(w).view(-1) for w in self.weights]
     
-    grads = [g / batch_count for g in grads]  # Average gradients
-    # shape [N, 2] pair [param, grad]
-    params_tensor = torch.cat(params).to(self.device)
-    grads_tensor = torch.cat(grads).to(self.device)
+        # Calculates the gradients of the original model from num_batches batches of data.
+        batch_count = 0
+        for x, y in self.loader:
+            x, y = x.to(self.device), y.to(self.device)
+            self.model.zero_grad()
+            x = self.model.forward(x)
+            L = torch.nn.CrossEntropyLoss()(x, y)
+            grads_batch = torch.autograd.grad(L, self.weights, allow_unused=True)
+            grads = [
+                g + (ag.view(-1) if ag is not None else torch.zeros_like(g.view(-1)))
+                for g, ag in zip(grads, grads_batch)
+            ]
+            batch_count += 1
+            if batch_count >= num_batches:
+                break
+        
+        grads = [g / batch_count for g in grads]  # Average gradients
+        # shape [N, 2] pair [param, grad]
+        params_tensor = torch.cat(params).to(self.device)
+        grads_tensor = torch.cat(grads).to(self.device)
+        
+        with torch.no_grad():
+            output = model(params_tensor, grads_tensor).squeeze(-1)
+            importance_scores = output.view(-1).cpu()
     
-    with torch.no_grad():
-        output = model(params_tensor, grads_tensor).squeeze(-1)
-        importance_scores = output.view(-1).cpu()
-
-    # Based on sparsity, it removes unimportant parameters.
-    thresh = float(importance_scores.kthvalue(int(sparsity * importance_scores.shape[0]))[0])
-    idx = 0
-    for j, layer in enumerate(self.indicators):
-        layer_size = layer.numel()
-        layer_scores = importance_scores[idx:idx + layer_size].view(layer.shape)
-        layer[(layer_scores.abs() <= thresh)] = 0
-        self.pruned[j] = int(torch.sum(layer == 0))
-        idx += layer_size
-    
-    idx = 0
-    # Update mask
-    for name, param in self.mask_.named_parameters():
-        if 'mask' not in name:
-            param.data = self.indicators[idx]
-            idx += 1
-    
-    if not silent:
-        print("Weights left: ", [
-            self.indicators[i].numel() - pruned for i, pruned in enumerate(self.pruned)
-        ])
-        print("Sparsities: ", [
-            round(100 * pruned / self.indicators[i].numel(), 2) 
-            for i, pruned in enumerate(self.pruned)
-        ])
-    
-    return self.mask_
+        # Based on sparsity, it removes unimportant parameters.
+        thresh = float(importance_scores.kthvalue(int(sparsity * importance_scores.shape[0]))[0])
+        idx = 0
+        for j, layer in enumerate(self.indicators):
+            layer_size = layer.numel()
+            layer_scores = importance_scores[idx:idx + layer_size].view(layer.shape)
+            layer[(layer_scores.abs() <= thresh)] = 0
+            self.pruned[j] = int(torch.sum(layer == 0))
+            idx += layer_size
+        
+        idx = 0
+        # Update mask
+        for name, param in self.mask_.named_parameters():
+            if 'mask' not in name:
+                param.data = self.indicators[idx]
+                idx += 1
+        
+        if not silent:
+            print("Weights left: ", [
+                self.indicators[i].numel() - pruned for i, pruned in enumerate(self.pruned)
+            ])
+            print("Sparsities: ", [
+                round(100 * pruned / self.indicators[i].numel(), 2) 
+                for i, pruned in enumerate(self.pruned)
+            ])
+        
+        return self.mask_
     def snipR(self, sparsity, silent=False):
         with torch.no_grad():
             saliences = [torch.zeros_like(w) for w in self.weights]
