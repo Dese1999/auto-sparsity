@@ -157,11 +157,12 @@ class Pruner:
                 break
         grads = [g / batch_count for g in grads]  # Average gradients
         #shape [N, 2] pair [param, grad]
-        X = torch.stack([torch.cat(params), torch.cat(grads)], dim=1)
-        with torch.no_grad():
-            output = model(X).squeeze(-1)
-            importance_scores = output.view(-1).cpu()
-
+    params_tensor = torch.cat(params).to(self.device)
+    grads_tensor = torch.cat(grads).to(self.device)
+    with torch.no_grad():
+        output = model(params_tensor, grads_tensor).squeeze(-1)
+        importance_scores = output.view(-1).cpu()
+      
         # Based on sparsity, it removes unimportant parameters.
         thresh = float(importance_scores.kthvalue(int(sparsity * importance_scores.shape[0]))[0])
         idx = 0
