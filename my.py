@@ -45,11 +45,13 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
         importance_data_path = os.path.join(cfg.exp_dir, "importance_data.pkl")
         autos_model_path = os.path.join(cfg.exp_dir, "autos_model.pth")
         pruner.generate_importance_data(sparsity=cfg.sparsity, save_path=importance_data_path)
+        print(f"cfg.exp_dir: {cfg.exp_dir}")
+        print(f"autos_model_path: {cfg.autos_model_path}")
         train_autos_model(
             data_path=importance_data_path,
             save_path=autos_model_path,
             device=cfg.device,
-            epochs=10,
+            epochs=1,
             batch_size=64,
             lr=0.001,
             cfg=cfg
