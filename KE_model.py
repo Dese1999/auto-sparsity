@@ -508,7 +508,7 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
             best_tst_acc5 = 0
 
     if cfg.eval_tst and cfg.eval_intermediate_tst == 0:  # cfg.epochs < 300 and
-        last_tst_acc1, last_tst_acc5, last_tst_loss = validate(dataset.tst_loader, model, criterion, cfg, writer, 0)
+        last_tst_acc1, last_tst_acc5 = validate(dataset.tst_loader, model, criterion, cfg, writer, 0)
         best_tst_acc1 = max(last_tst_acc1, best_tst_acc1)
         best_tst_acc5 = max(last_tst_acc5, best_tst_acc5)
         if not cfg.no_wandb:
