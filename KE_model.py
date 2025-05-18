@@ -427,17 +427,17 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
 
 
         # Validation
-        # if (epoch + 1) % cfg.test_interval == 0:
-        #     # evaluate on validation set
-        #     start_validation = time.time()
-        #     last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
-        #     validation_time.update((time.time() - start_validation) / 60)
-         if (epoch + 1) % cfg.test_interval == 0:
-                start_validation = time.time()
-                last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
-                validation_time.update((time.time() - start_validation) / 60)
-                epoch_metrics['test_acc1'].append(float(last_val_acc1) if last_val_acc1 is not None else None)
-                epoch_metrics['test_acc5'].append(float(last_val_acc5) if last_val_acc5 is not None else None)
+        if (epoch + 1) % cfg.test_interval == 0:
+            # evaluate on validation set
+            start_validation = time.time()
+            last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
+            validation_time.update((time.time() - start_validation) / 60)
+         # if (epoch + 1) % cfg.test_interval == 0:
+         #        start_validation = time.time()
+         #        last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
+         #        validation_time.update((time.time() - start_validation) / 60)
+         #        epoch_metrics['test_acc1'].append(float(last_val_acc1) if last_val_acc1 is not None else None)
+         #        epoch_metrics['test_acc5'].append(float(last_val_acc5) if last_val_acc5 is not None else None)
                 #epoch_metrics['test_loss'].append(float(last_val_loss) if last_val_loss is not None else None)
 
 
