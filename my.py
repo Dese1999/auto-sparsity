@@ -123,26 +123,20 @@ def start_KE(cfg):
     cfg.exp_dir = os.path.join(os.getcwd(), 'experiments', 'autos_cifar10')
     os.makedirs(cfg.exp_dir, exist_ok=True)
     base_dir = pathlib.Path(f"{path_utils.get_checkpoint_dir()}/{cfg.name}")
-    if not os.path.exists(base_dir):
-        os.mkdir(base_dir)
+    os.makedirs(base_dir, exist_ok=True)
 
     ckpt_queue = []
     model = None
     fish_mat = None
-    
 
-   #############ResNet#################
+    #############ResNet#################
     weights_history = {
-        'conv1': [],                  # Initial conv layer
-        'layer1.0.conv1': [],         # First conv in the first block of layer1
-        'layer2.0.conv1': [],         # First conv in the first block of layer2
-        'layer3.0.conv1': [],         # First conv in the first block of layer3
-        'layer4.0.conv1': [],         # First conv in the first block of layer4
-        'fc': []                      # Final fully connected layer
+        'conv1': [], 'layer1.0.conv1': [], 'layer2.0.conv1': [],
+        'layer3.0.conv1': [], 'layer4.0.conv1': [], 'fc': []
     }
     mask_history = {}
-    # Optional: Print model structure to verify layer names
-  
+    all_epoch_data = []  # Store epoch_metrics for all generations
+
     for gen in range(cfg.num_generations):
         cfg.start_epoch = 0
         model, fish_mat, sparse_mask = train_dense(cfg, gen, model=model, fisher_mat=fish_mat)
@@ -165,52 +159,102 @@ def start_KE(cfg):
         if cfg.num_generations == 1:
             break
 
+    # Plotting with enhanced visualizations
     if mask_history and len(mask_history) > 0:
-        plt.figure(figsize=(15, 10))
-        any_data_plotted = False
-        available_layers = mask_history[0].keys() if 0 in mask_history else []
-        print(f"Available layers in mask_history: {list(available_layers)}")
-        
-        for layer_name in available_layers:
-            sparsity_per_gen = []
-            for gen in range(cfg.num_generations):
-                if gen in mask_history and layer_name in mask_history[gen]:
-                    mask = mask_history[gen][layer_name]
-                    sparsity = 100 * (1 - mask.mean())
-                    sparsity_per_gen.append(sparsity)
-                else:
-                    sparsity_per_gen.append(0)
-            
-            if any(sparsity_per_gen):
-                plt.plot(range(cfg.num_generations), sparsity_per_gen, label=f'{layer_name}', marker='o')
-                any_data_plotted = True
-        
-        if any_data_plotted:
-            plt.title("Sparsity Changes Across Generations for Different Layers")
-            plt.xlabel("Generation")
-            plt.ylabel("Sparsity (%)")
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.grid(True)
+        # Prepare sparsity data
+        sparsity_data = []
+        for gen in mask_history:
+            for layer_name, mask in mask_history[gen].items():
+                sparsity = 100 * (1 - mask.mean())
+                sparsity_data.append({'Generation': gen, 'Layer': layer_name, 'Sparsity': sparsity})
+        sparsity_df = pd.DataFrame(sparsity_data)
+
+        # 1. Sparsity Bar Plot (Seaborn)
+        plt.figure(figsize=(14, 6))
+        sns.barplot(x='Layer', y='Sparsity', hue='Generation', data=sparsity_df, palette='viridis')
+        plt.title(f'Sparsity Across Layers for {cfg.set}, {cfg.arch}', fontsize=14, pad=15)
+        plt.xlabel('Layer', fontsize=12)
+        plt.ylabel('Sparsity (%)', fontsize=12)
+        plt.xticks(rotation=45, ha='right', fontsize=10)
+        plt.legend(title='Generation', fontsize=10, title_fontsize=12)
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        plt.tight_layout()
+        plt.savefig(os.path.join(base_dir, 'sparsity_across_layers.png'), dpi=300, bbox_inches='tight')
+        plt.close()
+
+        # 2. Sparsity Line Plot (Plotly)
+        fig = make_subplots(rows=1, cols=1, subplot_titles=[f'Sparsity Over Generations ({cfg.set}, {cfg.arch})'])
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+        for layer_name in sparsity_df['Layer'].unique():
+            layer_df = sparsity_df[sparsity_df['Layer'] == layer_name]
+            fig.add_trace(go.Scatter(
+                x=layer_df['Generation'],
+                y=layer_df['Sparsity'],
+                mode='lines+markers',
+                name=layer_name,
+                line=dict(width=2, color=colors[len(fig.data) % len(colors)]),
+                marker=dict(size=8)
+            ))
+        fig.update_layout(
+            xaxis_title='Generation',
+            yaxis_title='Sparsity (%)',
+            showlegend=True,
+            template='plotly_white',
+            font=dict(size=12),
+            legend=dict(x=1.05, y=1, xanchor='left', yanchor='top', bgcolor='rgba(255,255,255,0.5)', bordercolor='Black', borderwidth=1),
+            width=800,
+            height=500
+        )
+        fig.write_html(os.path.join(base_dir, 'sparsity_over_generations.html'))
+        fig.write_image(os.path.join(base_dir, 'sparsity_over_generations.png'), width=800, height=500)
+
+        # 3. Mask Overlap Plot (Seaborn)
+        overlap_data = []
+        for gen1 in mask_history:
+            for gen2 in mask_history:
+                if gen1 < gen2:
+                    prev_model = deepcopy(model)
+                    curr_model = deepcopy(model)
+                    for (name, param) in prev_model.named_parameters():
+                        if name in mask_history[gen1]:
+                            param.data = torch.from_numpy(mask_history[gen1][name]).to(param.device)
+                    for (name, param) in curr_model.named_parameters():
+                        if name in mask_history[gen2]:
+                            param.data = torch.from_numpy(mask_history[gen2][name]).to(param.device)
+                    overlap = percentage_overlap(prev_model, curr_model, percent_flag=True)
+                    for layer, perc in overlap.items():
+                        overlap_data.append({'Layer': layer, 'Comparison': f'Gen {gen1} vs Gen {gen2}', 'Overlap': perc})
+        overlap_df = pd.DataFrame(overlap_data)
+        if not overlap_df.empty:
+            plt.figure(figsize=(14, 6))
+            sns.barplot(x='Layer', y='Overlap', hue='Comparison', data=overlap_df, palette='magma')
+            plt.title(f'Mask Overlap Between Generations ({cfg.set}, {cfg.arch})', fontsize=14, pad=15)
+            plt.xlabel('Layer', fontsize=12)
+            plt.ylabel('Overlap (%)', fontsize=12)
+            plt.xticks(rotation=45, ha='right', fontsize=10)
+            plt.legend(title='Comparison', fontsize=10, title_fontsize=12)
+            plt.grid(True, axis='y', linestyle='--', alpha=0.7)
             plt.tight_layout()
-            plt.savefig(os.path.join(base_dir, "mask_sparsity_plot.png"))
-            plt.show()
-        else:
-            print("No data to plot for mask sparsity")
-    else:
-        print("No mask history available to plot")
+            plt.savefig(os.path.join(base_dir, 'mask_overlap.png'), dpi=300, bbox_inches='tight')
+            plt.close()
 
-    for layer_name, weights_list in weights_history.items():
-        plt.figure(figsize=(12, 5))
-        for gen, weights in enumerate(weights_list):
-            plt.plot(weights[:10], label=f'Generation {gen}', alpha=0.7)
-        plt.title(f"Changes in {layer_name} Weights Across Generations")
-        plt.xlabel("Weight Index")
-        plt.ylabel("Weight Value")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(os.path.join(base_dir, f"{layer_name}_weights_plot.png"))
-        plt.show()
+        # 4. Weights Distribution Plot (Seaborn)
+        for layer_name, weights_list in weights_history.items():
+            plt.figure(figsize=(12, 6))
+            for gen, weights in enumerate(weights_list):
+                sns.kdeplot(weights[:100], label=f'Generation {gen}', linewidth=2, alpha=0.7)
+            plt.title(f'Weight Distribution for {layer_name} ({cfg.set}, {cfg.arch})', fontsize=14, pad=15)
+            plt.xlabel('Weight Value', fontsize=12)
+            plt.ylabel('Density', fontsize=12)
+            plt.legend(fontsize=10, title='Generation', title_fontsize=12)
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.tight_layout()
+            plt.savefig(os.path.join(base_dir, f"{layer_name}_weights_distribution.png"), dpi=300, bbox_inches='tight')
+            plt.close()
 
+        # Log if no mask history
+        if not mask_history:
+            print("No mask history available to plot")
 # Function to clean up checkpoint directory
 def clean_dir(ckpt_dir, num_epochs):
     if '0000' in str(ckpt_dir):
