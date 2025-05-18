@@ -540,7 +540,7 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
 
     if cfg.autos:
       net = deepcopy(model)
-      prune = Pruner(net, dataset.train_loader, cfg.device, silent=False)
+      prune = Pruner(net, dataset.train_loader, cfg.device, silent=False, cfg=cfg)
       fisher_mat = prune.autos_prune(1 - cfg.sparsity, autos_model_path=os.path.join(cfg.exp_dir, "autos_model.pth"))
 
     return run_base_dir, fisher_mat, model
