@@ -119,6 +119,8 @@ def percentage_overlap(prev_mask, curr_mask, percent_flag=False):
 
 # Main function to start the Knowledge Evolution process
 def start_KE(cfg):
+    cfg.exp_dir = os.path.join(os.getcwd(), 'experiments', 'autos_cifar10')
+    os.makedirs(cfg.exp_dir, exist_ok=True)
     base_dir = pathlib.Path(f"{path_utils.get_checkpoint_dir()}/{cfg.name}")
     if not os.path.exists(base_dir):
         os.mkdir(base_dir)
