@@ -130,11 +130,10 @@ class Pruner:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)  # creat directory 
         torch.save(data, save_path)
         return data
-
     def autos_prune(self, sparsity, autos_model_path, num_batches=10, silent=False):
         num_batches = max((len(self.loader) / 32), num_batches)
         
-        # Loads the AutoS (MLP) model
+        # Load the AutoS (MLP) model
         from utils.autosnet import MLP
         model = MLP().to(self.device)
         model.load_state_dict(torch.load(autos_model_path))
@@ -145,13 +144,13 @@ class Pruner:
         params = [w.view(-1).to(self.device) for w in self.weights]
         grads = [torch.zeros_like(w).view(-1) for w in self.weights]
     
-        # Calculates the gradients of the original model from num_batches batches of data
+        # Calculate gradients from num_batches
         batch_count = 0
         for x, y in self.loader:
             x, y = x.to(self.device), y.to(self.device)
             self.model.zero_grad()
-            x = self.model.forward(x)
-            L = torch.nn.CrossEntropyLoss()(x, y)
+            output = self.model.forward(x)
+            L = torch.nn.CrossEntropyLoss()(output, y)
             grads_batch = torch.autograd.grad(L, self.weights, allow_unused=True)
             grads = [
                 g + (ag.view(-1) if ag is not None else torch.zeros_like(g.view(-1)))
@@ -164,9 +163,6 @@ class Pruner:
         grads = [g / batch_count for g in grads]  # Average gradients
         params_tensor = torch.cat(params).to(self.device)
         grads_tensor = torch.cat(grads).to(self.device)
-        # Debug: Print tensor shapes
-        # print(f"Params tensor shape: {params_tensor.shape}")
-        # print(f"Grads tensor shape: {grads_tensor.shape}")
         
         # Use DataLoader for batch processing
         from torch.utils.data import TensorDataset, DataLoader
@@ -176,17 +172,11 @@ class Pruner:
         with torch.no_grad():
             for batch_params, batch_grads in loader:
                 batch_params, batch_grads = batch_params.to(self.device), batch_grads.to(self.device)
-                # Debug: Print batch shapes
-                #print(f"Batch shapes: params={batch_params.shape}, grads={batch_grads.shape}")
-                
-                output = model(batch_params, batch_grads).squeeze(-1)
-                # Debug: Print output shape
-                #print(f"Output shape: {output.shape}")
-                
+                output = model(batch_params, batch_grads).squeeze(-1)  # Pass both params and grads
                 importance_scores.append(output.cpu())
         importance_scores = torch.cat(importance_scores)
     
-        # Based on sparsity, it removes unimportant parameters
+        # Prune based on sparsity
         thresh = float(importance_scores.kthvalue(int(sparsity * importance_scores.shape[0]))[0])
         idx = 0
         for j, layer in enumerate(self.indicators):
@@ -197,7 +187,6 @@ class Pruner:
             idx += layer_size
         
         idx = 0
-        # Update mask
         for name, param in self.mask_.named_parameters():
             if 'mask' not in name:
                 param.data = self.indicators[idx]
@@ -213,7 +202,6 @@ class Pruner:
             ])
         
         return self.mask_
-        
     def snipR(self, sparsity, silent=False):
         with torch.no_grad():
             saliences = [torch.zeros_like(w) for w in self.weights]
