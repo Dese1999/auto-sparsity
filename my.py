@@ -71,7 +71,7 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
     if cfg.reset_important_weights:
         if cfg.autos or cfg.snip:
             ckpt_path, fisher_mat, model = KE_model.ke_cls_train_fish(cfg, model, generation, fisher_mat)
-            pruner = Pruner(model, dataset.train_loader, cfg.device, silent=False)
+            pruner = Pruner(model, dataset.train_loader, cfg.device, silent=False, cfg=cfg)
             if cfg.autos:
                 fisher_mat = pruner.autos_prune(1 - cfg.sparsity, autos_model_path=cfg.autos_model_path)
             else:
