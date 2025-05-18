@@ -6,7 +6,7 @@ from copy import deepcopy
 import utils
 from utils.net_utils import create_dense_mask_0
 from utils.autosnet import  ResNet18
-#from utils.autosnet import MLP 
+from utils.autosnet import MLP 
 
 class Pruner:
     def __init__(self, model, loader=None, device='cpu', silent=False):
@@ -132,8 +132,8 @@ class Pruner:
     def autos_prune(self, sparsity, autos_model_path, num_batches=10, silent=False):
         num_batches = max((len(self.loader) / 32), num_batches)
         
-        # Loads the AutoS (ResNet18) model
-        model = ResNet18().to(self.device)
+        # Loads the AutoS (ResNet18/MLP) model
+        model = MLP().to(self.device)
         model.load_state_dict(torch.load(autos_model_path))
         model.eval()
     
