@@ -306,7 +306,7 @@ def extract_sparse_weights(cfg,net, mask):
 
     # Extract sparse model for the current task
     with torch.no_grad():
-        if cfg.snip or cfg.snip:
+        if cfg.autos or cfg.snip:
             for (name, param), param_mask in \
                     zip(sparse_net.named_parameters(),
                         mask.parameters()):
