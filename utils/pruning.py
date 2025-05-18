@@ -82,7 +82,7 @@ class Pruner:
         # Compute initial gradients (g0) with num_batches
         initial_grads = [torch.zeros_like(w) for w in self.weights]
         batch_count = 0
-        num_batches = max(mini_batches, len(self.loader) / 32)
+        num_batches = max(num_batches, len(self.loader) / 32)
         for x, y in self.loader:
             x, y = x.to(self.device), y.to(self.device)
             self.model.zero_grad()
