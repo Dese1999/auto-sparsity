@@ -306,21 +306,20 @@ def extract_sparse_weights(cfg,net, mask):
 
     # Extract sparse model for the current task
     with torch.no_grad():
-        if cfg.snip:
+        if cfg.snip or cfg.snip:
             for (name, param), param_mask in \
                     zip(sparse_net.named_parameters(),
                         mask.parameters()):
                 # if 'weight' in name and 'bn' not in name and 'downsample' not in name:
-                if 'mask' not in name:
+                if 'mask' not in name: # Apply mask to all non-mask parameters
                     param.data = param.data * param_mask.data
-
-        elif cfg.grasp:
-            for (name, param), param_mask in \
-                    zip(sparse_net.named_parameters(),
-                        mask.parameters()):
-                if 'weight' in name and 'bn' not in name and 'downsample' not in name:
-                # if 'mask' not in name:
-                    param.data = param.data * param_mask.data
+        # elif cfg.grasp:
+        #     for (name, param), param_mask in \
+        #             zip(sparse_net.named_parameters(),
+        #                 mask.parameters()):
+        #         if 'weight' in name and 'bn' not in name and 'downsample' not in name:
+        #         # if 'mask' not in name:
+        #             param.data = param.data * param_mask.data
     return sparse_net
 
     #     key = list(mask.keys())
