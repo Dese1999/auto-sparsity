@@ -41,7 +41,7 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
     # Generate importance data for AutoS in the first generation
     if generation == 0 and cfg.autos:
         print("Generate importance data for AutoS")
-        pruner = Pruner(model, dataset.train_loader, cfg.device)
+        pruner = Pruner(model, dataset.train_loader, cfg.device,cfg=cfg)
         importance_data_path = os.path.join(cfg.exp_dir, "importance_data.pkl")
         autos_model_path = os.path.join(cfg.exp_dir, "autos_model.pth")
         pruner.generate_importance_data(sparsity=cfg.sparsity, save_path=importance_data_path)
