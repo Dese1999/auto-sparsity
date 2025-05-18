@@ -9,11 +9,11 @@ from utils.autosnet import  ResNet18
 from utils.autosnet import MLP 
 
 class Pruner:
-    def __init__(self, model, loader=None, device='cpu', silent=False):
+    def __init__(self, model, loader=None, device='cpu', silent=False, cfg=None):
         self.device = device
         self.loader = loader
         self.model = model
-        
+        self.cfg = cfg
         self.weights = [layer for name, layer in model.named_parameters() if 'mask' not in name]
         self.indicators = [torch.ones_like(layer) for name, layer in model.named_parameters() if 'mask' not in name]
         self.mask_ = utils.net_utils.create_dense_mask_0(deepcopy(model), self.device, value=1)
@@ -69,12 +69,13 @@ class Pruner:
 
         return self.mask_
 
-    def generate_importance_data(self, sparsity, save_path="data.pkl", num_iterations=20, num_batches=10):
+    def generate_importance_data(self, sparsity, save_path=None, num_iterations=20, num_batches=10):
         """
         Generate dataset DA with iterative pruning based on Algorithm 2.
         """
         self.indicate()
         self.model.zero_grad()
+        save_path = save_path if save_path else self.cfg.importance_data_path
 
         # Save initial parameters (θ0)
         initial_params = [w.clone().detach() for w in self.weights]
@@ -126,6 +127,7 @@ class Pruner:
             "g_0": torch.cat([g.view(-1) for g in initial_grads]).detach(),
             "importance": torch.cat([s.view(-1) for s in importance_scores]).detach()
         }
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)  # creat directory 
         torch.save(data, save_path)
         return data
 
