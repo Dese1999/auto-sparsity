@@ -321,7 +321,7 @@ def reparameterize_non_sparse(cfg, net, net_sparse_set):
 def initialize_learnable_masks_with_snip(cfg, model, train_loader, fisher_mat=None):
     if fisher_mat is None:
         # Run SNIP in the first generation or when fisher_mat does not exist
-        pruner = Pruner(model, train_loader, cfg.device, silent=False)
+        pruner = Pruner(model, train_loader, cfg.device, silent=False, cfg=cfg)
         fisher_mat = pruner.snip(1 - cfg.sparsity)
         print(f"Generated new SNIP masks for initialization")
     else:
