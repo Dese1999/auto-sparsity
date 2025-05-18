@@ -57,17 +57,8 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
             cfg=cfg
         )
 
-     # Use get_directories for checkpoints and logs
-    if cfg.save_model:
-        run_base_dir, ckpt_base_dir, log_base_dir = path_utils.get_directories(cfg, generation)
-        net_utils.save_checkpoint(
-            {"epoch": 0, "arch": cfg.arch, "state_dict": model.state_dict()},
-            is_best=False,
-            filename=ckpt_base_dir / f"init_model.state",
-            save=False
-        )
     ###########################################################################   
- 
+    # Use get_directories for checkpoints and logs
     if cfg.save_model:
         run_base_dir, ckpt_base_dir, log_base_dir = path_utils.get_directories(cfg, generation)
         net_utils.save_checkpoint(
