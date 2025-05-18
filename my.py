@@ -50,8 +50,9 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
             save_path=autos_model_path,
             device=cfg.device,
             epochs=10,
-            batch_size=128,
-            lr=0.001
+            batch_size=64,
+            lr=0.001,
+            cfg=cfg
         )
     ###########################################################################   
  
