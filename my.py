@@ -21,7 +21,7 @@ def get_trainer(args):
     print(f"=> Using trainer from trainers.{args.trainer}")
     trainer = importlib.import_module(f"trainers.{args.trainer}")
     return trainer.train, trainer.validate
-
+    
 # Function to train the model for a single generation
 def train_dense(cfg, generation, model=None, fisher_mat=None):
     dataset = getattr(data, cfg.set)(cfg)
@@ -55,6 +55,16 @@ def train_dense(cfg, generation, model=None, fisher_mat=None):
             batch_size=64,
             lr=0.001,
             cfg=cfg
+        )
+
+     # Use get_directories for checkpoints and logs
+    if cfg.save_model:
+        run_base_dir, ckpt_base_dir, log_base_dir = path_utils.get_directories(cfg, generation)
+        net_utils.save_checkpoint(
+            {"epoch": 0, "arch": cfg.arch, "state_dict": model.state_dict()},
+            is_best=False,
+            filename=ckpt_base_dir / f"init_model.state",
+            save=False
         )
     ###########################################################################   
  
