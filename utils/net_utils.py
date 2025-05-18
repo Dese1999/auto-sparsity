@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils.autosnet import ResNet18
 from utils.autosnet import MLP
 
-def train_autos_model(data_path, save_path=None, epochs=40, device="cuda", batch_size=64, lr=0.001):
+def train_autos_model(data_path, save_path=None, epochs=40, device="cuda", batch_size=64, lr=0.001, cfg=None):
     save_path = save_path if save_path else cfg.autos_model_path
     data = torch.load(data_path)
     params, grads, importants = data["theta_0"], data["g_0"], data["importance"]
@@ -61,6 +61,7 @@ def train_autos_model(data_path, save_path=None, epochs=40, device="cuda", batch
             optimizer.step()
             total_loss += loss.item()
         print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss/len(train_loader):.4f}")
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)  # create directory 
     torch.save(model.state_dict(), save_path)
     return model
 
