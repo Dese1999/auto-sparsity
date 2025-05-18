@@ -163,8 +163,8 @@ def autos_prune(self, sparsity, autos_model_path, num_batches=10, silent=False):
     params_tensor = torch.cat(params).to(self.device)
     grads_tensor = torch.cat(grads).to(self.device)
     # Debug: Print tensor shapes
-    print(f"Params tensor shape: {params_tensor.shape}")
-    print(f"Grads tensor shape: {grads_tensor.shape}")
+    # print(f"Params tensor shape: {params_tensor.shape}")
+    # print(f"Grads tensor shape: {grads_tensor.shape}")
     
     # Use DataLoader for batch processing
     from torch.utils.data import TensorDataset, DataLoader
@@ -175,11 +175,11 @@ def autos_prune(self, sparsity, autos_model_path, num_batches=10, silent=False):
         for batch_params, batch_grads in loader:
             batch_params, batch_grads = batch_params.to(self.device), batch_grads.to(self.device)
             # Debug: Print batch shapes
-            print(f"Batch shapes: params={batch_params.shape}, grads={batch_grads.shape}")
+            #print(f"Batch shapes: params={batch_params.shape}, grads={batch_grads.shape}")
             
             output = model(batch_params, batch_grads).squeeze(-1)
             # Debug: Print output shape
-            print(f"Output shape: {output.shape}")
+            #print(f"Output shape: {output.shape}")
             
             importance_scores.append(output.cpu())
     importance_scores = torch.cat(importance_scores)
