@@ -7,7 +7,7 @@ import utils
 #from utils.net_utils import create_dense_mask_0
 ################################################################################
 class Pruner:
-    def __init__(self, model, loader=None, device='cpu', silent=False):
+    def __init__(self, model, loader=None, device='cpu', silent=False, cfg=cfg):
         self.device = device
         self.loader = loader
         self.model = model
