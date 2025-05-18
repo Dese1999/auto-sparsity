@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils.autosnet import ResNet18
 from utils.autosnet import MLP
 
-def train_autos_model(data_path, save_path, epochs=50, device="cuda", batch_size=512, lr=0.001):
+def train_autos_model(data_path, save_path, epochs=50, device="cuda", batch_size=64, lr=0.001):
     data = torch.load(data_path)
     params, grads, importants = data["theta_0"], data["g_0"], data["importance"]
     
@@ -34,7 +34,7 @@ def train_autos_model(data_path, save_path, epochs=50, device="cuda", batch_size
     importants = (importants - min_imp + 1e-7) / (max_imp - min_imp + 1e-7)
     dataset = TensorDataset(params, grads, importants)
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    model = ResNet18().to(device)
+    model = MLP().to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     for epoch in range(epochs):
