@@ -54,32 +54,23 @@ def get_datasets_dir(dataset_name):
 
     return datasets_dir
     
-def get_directories(args, generation):
+
+def get_directories(args,generation):
+    # if args.config_file is None or args.name is None:
     if args.config_file is None and args.name is None:
         raise ValueError("Must have name and config")
-    
+
+    # config = pathlib.Path(args.config_file).stem
     config = args.name
     rno = random.randint(0, 1000000)
-    run_base_dir = pathlib.Path(f"{args.exp_dir}/gen_{generation}/{rno}")
-    return run_base_dir, run_base_dir / "checkpoints", run_base_dir / "logs"
-
-
-# def get_directories(args,generation):
-#     # if args.config_file is None or args.name is None:
-#     if args.config_file is None and args.name is None:
-#         raise ValueError("Must have name and config")
-
-#     # config = pathlib.Path(args.config_file).stem
-#     config = args.name
-#     rno = random.randint(0, 1000000)
-#     if args.log_dir is None:
-#         run_base_dir = pathlib.Path(
-#                 f"{get_checkpoint_dir()}/{args.name}/gen_{generation}/{rno}"
-#             )
-#     else:
-#         run_base_dir = pathlib.Path(
-#                 f"{args.log_dir}/{args.name}/gen_{generation}/{rno}"
-#             )
+    if args.log_dir is None:
+        run_base_dir = pathlib.Path(
+                f"{get_checkpoint_dir()}/{args.name}/gen_{generation}/{rno}"
+            )
+    else:
+        run_base_dir = pathlib.Path(
+                f"{args.log_dir}/{args.name}/gen_{generation}/{rno}"
+            )
     
         
     def _run_dir_exists(run_base_dir):
