@@ -11,7 +11,7 @@ class Pruner:
         self.device = device
         self.loader = loader
         self.model = model
-        
+        self.cfg = cfg
         self.weights = []
         self.indicators = []
         self.weight_names = []
