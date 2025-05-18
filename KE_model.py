@@ -359,6 +359,8 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
    
 
     # optionally resume from a checkpoint
+    best_tst_acc1 = 0.0
+    best_tst_acc5 = 0.0
     best_val_acc1 = 0.0
     best_val_acc5 = 0.0
     best_train_acc1 = 0.0
@@ -424,12 +426,20 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
 
 
 
+        # Validation
+        # if (epoch + 1) % cfg.test_interval == 0:
+        #     # evaluate on validation set
+        #     start_validation = time.time()
+        #     last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
+        #     validation_time.update((time.time() - start_validation) / 60)
+         if (epoch + 1) % cfg.test_interval == 0:
+                start_validation = time.time()
+                last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
+                validation_time.update((time.time() - start_validation) / 60)
+                epoch_metrics['test_acc1'].append(float(last_val_acc1) if last_val_acc1 is not None else None)
+                epoch_metrics['test_acc5'].append(float(last_val_acc5) if last_val_acc5 is not None else None)
+                #epoch_metrics['test_loss'].append(float(last_val_loss) if last_val_loss is not None else None)
 
-        if (epoch + 1) % cfg.test_interval == 0:
-            # evaluate on validation set
-            start_validation = time.time()
-            last_val_acc1, last_val_acc5 = validate(dataset.val_loader, model, criterion, cfg, writer, epoch)
-            validation_time.update((time.time() - start_validation) / 60)
 
             if not cfg.no_wandb:
                 wandb.log(
@@ -498,17 +508,15 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
             best_tst_acc5 = 0
 
     if cfg.eval_tst and cfg.eval_intermediate_tst == 0:  # cfg.epochs < 300 and
-        last_tst_acc1, last_tst_acc5 = validate(dataset.tst_loader, model, criterion, cfg, writer, 0)
-        best_tst_acc1 = 0
-        best_tst_acc5 = 0
+        last_tst_acc1, last_tst_acc5, last_tst_loss = validate(dataset.tst_loader, model, criterion, cfg, writer, 0)
+        best_tst_acc1 = max(last_tst_acc1, best_tst_acc1)
+        best_tst_acc5 = max(last_tst_acc5, best_tst_acc5)
         if not cfg.no_wandb:
             wandb.log({'Generation': generation, 'Test Acc1': last_tst_acc1, 'Test Acc5': last_tst_acc5})
     else:
         last_tst_acc1 = 0
         last_tst_acc5 = 0
-        best_tst_acc1 = 0
-        best_tst_acc5 = 0
-
+    
 
     col_names = ['generation', 'sparcity','last_val_acc1', 'last_val_acc5', 'best_val_acc1', 'best_val_acc5', 'last_tst_acc1', 'last_tst_acc5', 'best_tst_acc1', 'best_tst_acc5', 'best_train_acc1', 'best_train_acc5']
     arg_list = [generation, cfg.sparsity,last_val_acc1, last_val_acc5, best_val_acc1, best_val_acc5, last_tst_acc1, last_tst_acc5, best_tst_acc1, best_tst_acc5, best_train_acc1, best_train_acc5]
