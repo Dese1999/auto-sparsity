@@ -537,7 +537,7 @@ def ke_cls_train_fish(cfg, model, generation, fisher_mat):
     # SNIP implementation at the end of the generation
     if cfg.snip:
         net = deepcopy(model)
-        prune = Pruner(net, dataset.train_loader, cfg.device, silent=False)
+        prune = Pruner(net, dataset.train_loader, cfg.device, silent=False, cfg=cfg)
         fisher_mat = prune.snip(1 - cfg.sparsity)
         if fisher_mat is None:
             cfg.logger.error(f"SNIP failed to produce fisher_mat in generation {generation}")
