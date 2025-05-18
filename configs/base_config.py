@@ -7,6 +7,7 @@ import logging.config
 from utils import os_utils
 from utils import log_utils
 from utils import path_utils
+import argparse
 
 args = None
 
@@ -16,25 +17,28 @@ class Config:
         autos_num_iterations: 20
         autos_num_batches: 10
         
+        
+        parser = argparse.ArgumentParser(description='PyTorch Training')
         parser.add_argument('--exp_dir', 
             type=str, 
-            default='./experiments/autos_cifar10', 
+            default=os.path.join(os.getcwd(), 'experiments', 'autos_cifar10'), 
             help='Directory to save experiment results')
-
+        
         parser.add_argument("--autos", 
             action="store_true", 
             default=True,  
             help="Use AutoS pruning")
-
+        
         parser.add_argument("--autos_model_path", 
-            default="./experiments/autos_cifar10/autos_model.pth",  
+            default=os.path.join(os.getcwd(), 'experiments', 'autos_cifar10', 'autos_model.pth'),  
             type=str, 
             help="Path to AutoS model")
-
+        
         parser.add_argument("--importance_data_path", 
-            default="./experiments/autos_cifar10/importance_data.pkl",  
+            default=os.path.join(os.getcwd(), 'experiments', 'autos_cifar10', 'importance_data.pkl'),  
             type=str,
             help="Path to importance data")
+        
           # General Config
         parser.add_argument(
             "--data", help="path to dataset base directory", default="/home/datasets"
