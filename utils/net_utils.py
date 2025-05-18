@@ -23,6 +23,9 @@ from utils.autosnet import MLP
 def train_autos_model(data_path, save_path, epochs=40, device="cuda", batch_size=64, lr=0.001):
     data = torch.load(data_path)
     params, grads, importants = data["theta_0"], data["g_0"], data["importance"]
+    # Debug: Print input shapes
+    print(f"Input shapes: params={params.shape}, grads={grads.shape}, importants={importants.shape}")
+
     
     params = params.detach().requires_grad_(False)
     grads = grads.detach().requires_grad_(False)
@@ -42,8 +45,14 @@ def train_autos_model(data_path, save_path, epochs=40, device="cuda", batch_size
         total_loss = 0
         for batch_params, batch_grads, batch_importants in train_loader:
             batch_params, batch_grads, batch_importants = batch_params.to(device), batch_grads.to(device), batch_importants.to(device)
+            # Debug: Print batch shapes
+            print(f"Batch shapes: params={batch_params.shape}, grads={batch_grads.shape}, importants={batch_importants.shape}")
+            
             optimizer.zero_grad()
             output = model(batch_params, batch_grads).squeeze(-1)
+            # Debug: Print output and target shapes
+            print(f"Output shape: {output.shape}, Target shape: {batch_importants.shape}")
+            
             loss = criterion(output, batch_importants)
             loss.backward()
             optimizer.step()
