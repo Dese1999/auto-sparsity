@@ -17,22 +17,22 @@ class Config:
         autos_num_batches: 10
         
         parser.add_argument('--exp_dir', 
-        type=str, 
-        default=r'C:\Users\Administrator\Pictures\checkpoints\Pictures\SPLT_CLS_CIFAR10_Split_ResNet18_cskdFalse_smth0.1_k0.5_G2_e4_evrand_hResetFalse_smwels_None_seedNone', 
-        help='Directory to save experiment results')
+            type=str, 
+            default='./experiments/autos_cifar10', 
+            help='Directory to save experiment results')
 
         parser.add_argument("--autos", 
             action="store_true", 
             default=True,  
             help="Use AutoS pruning")
-        
+
         parser.add_argument("--autos_model_path", 
-            default=r'C:\Users\Administrator\Pictures\checkpoints\Pictures\SPLT_CLS_CIFAR10_Split_ResNet18_cskdFalse_smth0.1_k0.5_G2_e4_evrand_hResetFalse_smwels_None_seedNone\autos_model.pth',  
+            default="./experiments/autos_cifar10/autos_model.pth",  
             type=str, 
             help="Path to AutoS model")
-        
+
         parser.add_argument("--importance_data_path", 
-            default=r'C:\Users\Administrator\Pictures\checkpoints\Pictures\SPLT_CLS_CIFAR10_Split_ResNet18_cskdFalse_smth0.1_k0.5_G2_e4_evrand_hResetFalse_smwels_None_seedNone\importance_data.pkl',  
+            default="./experiments/autos_cifar10/importance_data.pkl",  
             type=str,
             help="Path to importance data")
           # General Config
