@@ -7,7 +7,7 @@ import utils
 from utils.net_utils import create_dense_mask_0
 from utils.autosnet import  ResNet18
 from utils.autosnet import MLP 
-
+from torch.utils.data import TensorDataset, DataLoader
 class Pruner:
     def __init__(self, model, loader=None, device='cpu', silent=False, cfg=None):
         self.device = device
@@ -134,7 +134,6 @@ class Pruner:
         num_batches = max((len(self.loader) / 32), num_batches)
         
         # Load the AutoS (MLP) model
-        from utils.autosnet import MLP
         model = MLP().to(self.device)
         model.load_state_dict(torch.load(autos_model_path))
         model.eval()
@@ -164,8 +163,7 @@ class Pruner:
         params_tensor = torch.cat(params).to(self.device)
         grads_tensor = torch.cat(grads).to(self.device)
         
-        # Use DataLoader for batch processing
-        from torch.utils.data import TensorDataset, DataLoader
+        # Use DataLoader for batch processing  
         dataset = TensorDataset(params_tensor, grads_tensor)
         loader = DataLoader(dataset, batch_size=2048, shuffle=False)
         importance_scores = []
@@ -202,6 +200,7 @@ class Pruner:
             ])
         
         return self.mask_
+        
     def snipR(self, sparsity, silent=False):
         with torch.no_grad():
             saliences = [torch.zeros_like(w) for w in self.weights]
