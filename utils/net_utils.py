@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils.autosnet import ResNet18
 from utils.autosnet import MLP
 
-def train_autos_model(data_path, save_path=None, epochs=40, device="cuda", batch_size=64, lr=0.001, cfg=None):
+def train_autos_model(data_path, save_path=None, epochs=20, device="cuda", batch_size=64, lr=0.001, cfg=None):
     save_path = save_path if save_path else cfg.autos_model_path
     data = torch.load(data_path)
     params, grads, importants = data["theta_0"], data["g_0"], data["importance"]
