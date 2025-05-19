@@ -247,19 +247,19 @@ def start_KE(cfg):
             plt.savefig(os.path.join(base_dir, 'mask_overlap.png'), dpi=300, bbox_inches='tight')
             plt.close()
 
-        # 4. Weights Distribution Plot (Seaborn)
-        for layer_name, weights_list in weights_history.items():
-            plt.figure(figsize=(12, 6))
-            for gen, weights in enumerate(weights_list):
-                sns.kdeplot(weights[:100], label=f'Generation {gen}', linewidth=2, alpha=0.7)
-            plt.title(f'Weight Distribution for {layer_name} ({cfg.set}, {cfg.arch})', fontsize=14, pad=15)
-            plt.xlabel('Weight Value', fontsize=12)
-            plt.ylabel('Density', fontsize=12)
-            plt.legend(fontsize=10, title='Generation', title_fontsize=12)
-            plt.grid(True, linestyle='--', alpha=0.7)
-            plt.tight_layout()
-            plt.savefig(os.path.join(base_dir, f"{layer_name}_weights_distribution.png"), dpi=300, bbox_inches='tight')
-            plt.close()
+        # # 4. Weights Distribution Plot (Seaborn)
+        # for layer_name, weights_list in weights_history.items():
+        #     plt.figure(figsize=(12, 6))
+        #     for gen, weights in enumerate(weights_list):
+        #         sns.kdeplot(weights[:100], label=f'Generation {gen}', linewidth=2, alpha=0.7)
+        #     plt.title(f'Weight Distribution for {layer_name} ({cfg.set}, {cfg.arch})', fontsize=14, pad=15)
+        #     plt.xlabel('Weight Value', fontsize=12)
+        #     plt.ylabel('Density', fontsize=12)
+        #     plt.legend(fontsize=10, title='Generation', title_fontsize=12)
+        #     plt.grid(True, linestyle='--', alpha=0.7)
+        #     plt.tight_layout()
+        #     plt.savefig(os.path.join(base_dir, f"{layer_name}_weights_distribution.png"), dpi=300, bbox_inches='tight')
+        #     plt.close()
 
         # Log if no mask history
         if not mask_history:
@@ -304,6 +304,3 @@ if __name__ == '__main__':
         torch.cuda.manual_seed_all(cfg.seed)
     
     start_KE(cfg)
-
-###$ python .\DNR\train_KE_cls.py  --weight_decay 0.0001 --arch Split_ResNet18 --no_wandb --set CIFAR10 --data /data/input-ai/datasets/cifar10 \
-          ## --epochs 200 --num_generations 11  --sparsity 0.8 --save_model --snip --reset_important_weights
